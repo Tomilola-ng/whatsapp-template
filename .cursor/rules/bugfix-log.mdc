@@ -1,0 +1,9 @@
+---
+description: Keep user-facing bug fixes traceable
+alwaysApply: true
+---
+
+Before patching a user-facing bug, read `docs/BUGFIX_LOG.md`.
+After verification, add a symptom → root cause → fix → commit entry using its
+template. Do not add speculative entries or product-specific history to this
+generic starter.

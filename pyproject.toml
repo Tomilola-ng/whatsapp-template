@@ -1,0 +1,50 @@
+[project]
+name = "whatsapp-fastapi-2026-template"
+version = "0.1.0"
+description = "WhatsApp-ready FastAPI starter (PyWa webhook + email/OTP auth) for bots and AI assistants."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "cryptography>=46.0.3",
+    "pyjwt>=2.13.0",
+    "aerich>=0.9.2",
+    "aiosqlite>=0.21.0,<0.22",
+    "asyncpg>=0.30.0",
+    "boto3>=1.40.54",
+    "botocore>=1.40.54",
+    "email-validator>=2.3.0",
+    "fastapi[standard]>=0.125.0",
+    "httpx>=0.28.1",
+    "passlib[argon2]>=1.7.4",
+    "phonenumbers>=9.0.0",
+    "pydantic-settings>=2.11.0",
+    "python-jose[cryptography]>=3.5.0",
+    "pywa>=4.2,<5",
+    "resend>=2.29.0",
+    "rich>=13.9.0",
+    "slowapi>=0.1.9",
+    "tortoise-orm>=0.25.1",
+    "uvicorn>=0.37.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.14.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E402", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.aerich]
+tortoise_orm = "app.config.database.TORTOISE_ORM"
+location = "./migrations"
+src_folder = "./."

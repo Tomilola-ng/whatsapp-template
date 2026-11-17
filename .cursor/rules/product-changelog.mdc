@@ -1,0 +1,41 @@
+---
+description: Maintain docs/PRODUCT_CHANGELOG.md for intentional product/API flow changes
+alwaysApply: true
+---
+
+# Product change log
+
+## When
+
+Any time you change **client-facing product behaviour** (new/changed HTTP
+flows, app UX contracts, env vars for frontend integration, removed
+assumptions), update [`docs/PRODUCT_CHANGELOG.md`](../../docs/PRODUCT_CHANGELOG.md).
+
+Also add or update a **sendable delta** under [`client-handoff/`](../../client-handoff/)
+(with previous vs new flow, request/response shapes). Update module
+`app/*/handoff/CHANGELOG_*.md` and `CLIENT_HANDOFF.md` when the long-term
+reference changes.
+
+Read this log (and `docs/BUGFIX_LOG.md`) before telling users or agents that
+“E2E passing” means manual app/dashboard flows are complete.
+
+## What to write
+
+Add a new entry at the **top** of the Entries section (newest first). Use the
+template in the log file.
+
+Required fields:
+
+- Date and short title
+- Status (`shipped` / `partial` / `planned`)
+- Area (module or flow)
+- Client impact (what frontend/mobile must do)
+- API / env changes (routes, fields, settings)
+- Commit SHA(s) after the commit lands
+- Handoff links
+
+## Do not
+
+- Use this for pure bugfixes — use `docs/BUGFIX_LOG.md`
+- Duplicate long architectural prose from `spec/CHANGES.md`
+- Record secrets, invite tokens, or PII in the log

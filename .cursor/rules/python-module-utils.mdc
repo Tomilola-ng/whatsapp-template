@@ -1,0 +1,23 @@
+---
+description: Module layout, service packages, utils, and email conventions
+alwaysApply: true
+---
+
+# FastAPI module layout
+
+For `app/<package>/`, prefer this shape:
+
+- `services/` is a package, not a root `services.py`.
+- `services/core.py` and sibling service modules own business workflows, route orchestration, Tortoise transactions, notifications, and job entrypoints.
+- `services/__init__.py` re-exports the public service API with `__all__`.
+- `utils.py` contains pure helpers only: normalization, parsing, mapping, and small reusable logic with no full business workflow.
+- `tests/` contains shell/curl E2E checks that reuse `app/base/tests/lib/`.
+- `handoff/` contains client-facing integration docs.
+- `emails.py` contains module transactional emails.
+- `schedules/jobs/` contains cron/worker entrypoints only; business logic stays in `services/`.
+
+# Transactional email
+
+- Module email builders create inner HTML only and pass it to `app.base.email_template.base_email_template`.
+- Use `html.escape()` for all user- or API-derived strings interpolated into HTML.
+- Do not duplicate full document wrappers, header/footer CSS, or support copy outside the base email template.

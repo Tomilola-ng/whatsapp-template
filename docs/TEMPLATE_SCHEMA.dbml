@@ -1,0 +1,275 @@
+// WhatsApp FastAPI starter schema
+// Source of truth: current supported starter modules only
+// No mobile SSO, store billing, or push_device_tokens tables.
+// WhatsApp is the external messaging channel; notification "push" fields mean in-app/SSE.
+
+Enum user_type {
+  customer
+  provider
+  admin
+}
+
+Enum user_status {
+  active
+  suspended
+  pending_verification
+  deactivated
+  banned
+}
+
+Enum notification_type {
+  info
+  success
+  warning
+  error
+}
+
+Enum notification_channel {
+  email
+  sms
+  push // in-app list + SSE (legacy enum label; not FCM/APNs/Expo)
+}
+
+Enum otp_purpose {
+  account_verification
+  password_reset
+  delivery_confirmation
+}
+
+Enum otp_status {
+  pending
+  used
+  expired
+}
+
+Table fileasset {
+  id            int           [pk, increment]
+  key           varchar(255)  [not null]
+  alt_text      varchar(255)
+  content_type  varchar(100)
+  file_size     int
+}
+
+Table accounts {
+  id                  varchar(50)   [pk]
+  user_type           user_type     [not null, default: 'customer']
+  first_name          varchar(255)
+  last_name           varchar(255)
+  image_id            int           [ref: > fileasset.id]
+  state               varchar(255)
+  email               varchar(255)  [unique]
+  phone_number        varchar(20)
+  password            varchar(255)
+  display_name_override varchar(80)
+  username            varchar(32)   [unique]
+  status              user_status   [not null, default: 'pending_verification']
+  last_login_at       timestamp
+  auth_token_version  int           [not null, default: 0]
+  permissions_version int           [not null, default: 0]
+  created_at          timestamp     [not null]
+  updated_at          timestamp     [not null]
+
+  indexes {
+    email
+    user_type
+    status
+    (user_type, status)
+    phone_number
+    username
+  }
+}
+
+Table account_preferences {
+  id                          varchar(50) [pk]
+  account_id                  varchar(50) [not null, unique, ref: > accounts.id, delete: cascade]
+  push_enabled                boolean     [not null, default: true, note: 'in-app notifications; not mobile device push']
+  email_notifications_enabled boolean     [not null, default: false]
+  marketing_email_enabled     boolean     [not null, default: false]
+  email_login_mfa_enabled     boolean     [not null, default: false]
+  created_at                  timestamp   [not null]
+  updated_at                  timestamp   [not null]
+}
+
+Table permissions {
+  id          varchar(50)  [pk]
+  codename    varchar(100) [not null, unique]
+  module      varchar(50)  [not null]
+  action      varchar(50)  [not null]
+  description varchar(255)
+  created_at  timestamp    [not null]
+  updated_at  timestamp    [not null]
+
+  indexes {
+    module
+    (module, action)
+  }
+}
+
+Table access_roles {
+  id          varchar(50)  [pk]
+  slug        varchar(100) [not null, unique]
+  name        varchar(255) [not null]
+  description text
+  is_system   boolean      [not null, default: false]
+  created_at  timestamp    [not null]
+  updated_at  timestamp    [not null]
+}
+
+Table access_role_permissions {
+  id              varchar(50) [pk]
+  access_role_id  varchar(50) [not null, ref: > access_roles.id, delete: cascade]
+  permission_id   varchar(50) [not null, ref: > permissions.id, delete: cascade]
+
+  indexes {
+    (access_role_id, permission_id) [unique]
+  }
+}
+
+Table account_access_roles {
+  id              varchar(50) [pk]
+  account_id      varchar(50) [not null, ref: > accounts.id, delete: cascade]
+  access_role_id  varchar(50) [not null, ref: > access_roles.id, delete: cascade]
+  assigned_by_id  varchar(50) [ref: > accounts.id, delete: set null]
+  assigned_at     timestamp   [not null]
+
+  indexes {
+    (account_id, access_role_id) [unique]
+  }
+}
+
+Table account_permissions {
+  id              varchar(50) [pk]
+  account_id      varchar(50) [not null, ref: > accounts.id, delete: cascade]
+  permission_id   varchar(50) [not null, ref: > permissions.id, delete: cascade]
+  granted         boolean     [not null, default: true]
+  assigned_by_id  varchar(50) [ref: > accounts.id, delete: set null]
+  assigned_at     timestamp   [not null]
+
+  indexes {
+    (account_id, permission_id) [unique]
+  }
+}
+
+Table password_setup_codes {
+  id            varchar(50)  [pk]
+  account_id    varchar(50)  [not null, ref: > accounts.id, delete: cascade]
+  code_hash     varchar(255) [not null]
+  purpose       varchar(50)  [not null, default: 'admin_password_setup']
+  expires_at    timestamp    [not null]
+  used_at       timestamp
+  created_at    timestamp    [not null]
+  updated_at    timestamp
+
+  indexes {
+    account_id
+    expires_at
+  }
+}
+
+Table otps {
+  id            varchar(50)  [pk]
+  account_id    varchar(50)  [not null, ref: > accounts.id, delete: cascade]
+  code          varchar(10)  [note: 'legacy plaintext; nullable when code_hash is set']
+  code_hash     varchar(255) [note: 'preferred HMAC storage']
+  purpose       otp_purpose  [not null, default: 'account_verification']
+  status        otp_status   [not null, default: 'pending']
+  attempts      int          [not null, default: 0]
+  max_attempts  int          [not null, default: 3]
+  expires_at    timestamp    [not null]
+  verified_at   timestamp
+  created_at    timestamp    [not null]
+  updated_at    timestamp
+
+  indexes {
+    (account_id, purpose, status)
+    expires_at
+  }
+}
+
+Table notifications {
+  id            varchar(50)           [pk]
+  account_id    varchar(50)           [not null, ref: > accounts.id, delete: cascade]
+  type          notification_type     [not null, default: 'info']
+  channel       notification_channel  [not null, default: 'push']
+  title         varchar(255)          [not null]
+  message       text                  [not null]
+  action_url    varchar(500)
+  is_read       boolean               [not null, default: false]
+  sent_at       timestamp
+  read_at       timestamp
+  created_at    timestamp             [not null]
+  updated_at    timestamp
+
+  indexes {
+    account_id
+    is_read
+    created_at
+  }
+}
+
+Table audit_logs {
+  id                varchar(50)  [pk]
+  actor_account_id  varchar(50)  [ref: > accounts.id, delete: set null]
+  actor_type        varchar(30)  [not null]
+  action            varchar(120) [not null]
+  entity_type       varchar(120) [not null]
+  entity_id         varchar(120)
+  metadata          json
+  idempotency_key   varchar(255) [unique]
+  ip_address        varchar(80)
+  user_agent        text
+  created_at        timestamp    [not null]
+
+  indexes {
+    (entity_type, entity_id)
+    (actor_account_id, created_at)
+    action
+  }
+}
+
+Table client_error_logs {
+  id                varchar(50)   [pk]
+  message           varchar(4000) [not null]
+  flow              varchar(120)
+  screen            varchar(255)
+  email             varchar(255)
+  account_id        varchar(50)   [ref: > accounts.id, delete: set null]
+  platform          varchar(40)
+  app_version       varchar(80)
+  client_timestamp  timestamp
+  stack             text
+  metadata          json
+  ip_address        varchar(80)
+  user_agent        text
+  created_at        timestamp     [not null]
+
+  indexes {
+    (flow, created_at)
+    email
+    (account_id, created_at)
+    created_at
+  }
+}
+
+Table app_releases {
+  id                              varchar(50)  [pk]
+  platform                        varchar(10)  [not null]
+  version_name                    varchar(32)  [not null]
+  build_number                    int          [not null]
+  minimum_supported_version_name  varchar(32)  [not null]
+  minimum_supported_build_number  int          [not null]
+  force_update                    boolean      [not null, default: false]
+  update_title                    varchar(120) [not null]
+  update_message                  text         [not null]
+  store_url                       varchar(500) [not null]
+  is_active                       boolean      [not null, default: true]
+  published_at                    timestamp
+  created_at                      timestamp    [not null]
+  updated_at                      timestamp    [not null]
+
+  indexes {
+    (platform, build_number) [unique]
+    (platform, is_active, published_at, build_number)
+    published_at
+  }
+}

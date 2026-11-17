@@ -1,0 +1,14 @@
+---
+description: Client handoff docs are for frontend and mobile developers
+alwaysApply: false
+---
+
+# Client API handoff rules
+
+When editing `app/**/handoff/*.md` or `app/base/handoff/*.md`:
+
+- Write for frontend/mobile developers, not backend maintainers.
+- Include method, path, auth requirement, params, request JSON, response JSON fields, status codes, and error shapes.
+- Document the standard response envelope, pagination shape, and rate-limit headers/429 response where relevant.
+- Never include migrations, SQL, Tortoise internals, internal file paths, or deployment-only implementation details.
+- Verify endpoint paths and auth/role markers against live route registration before marking a flow complete.

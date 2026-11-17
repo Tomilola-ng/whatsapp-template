@@ -1,0 +1,45 @@
+"""Public account service API."""
+
+from app.accounts.services.deletion import delete_account
+from app.accounts.services.core import (
+    authenticate_user,
+    change_password,
+    exchange_setup_code,
+    get_current_user_profile,
+    get_account_preferences,
+    logout_user,
+    refresh_access_token,
+    register_account,
+    request_otp,
+    reset_password,
+    update_user_image,
+    update_user_profile,
+    update_account_preferences,
+    verify_account_otp,
+    verify_login_otp,
+    verify_reset_password_otp,
+    _send_admin_upgrade_email,
+    _send_invite_email,
+)
+
+__all__ = [
+    "_send_admin_upgrade_email",
+    "_send_invite_email",
+    "get_account_preferences",
+    "authenticate_user",
+    "change_password",
+    "delete_account",
+    "exchange_setup_code",
+    "get_current_user_profile",
+    "logout_user",
+    "refresh_access_token",
+    "register_account",
+    "request_otp",
+    "reset_password",
+    "update_user_image",
+    "update_user_profile",
+    "update_account_preferences",
+    "verify_account_otp",
+    "verify_login_otp",
+    "verify_reset_password_otp",
+]
